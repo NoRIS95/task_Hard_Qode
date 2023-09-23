@@ -1,11 +1,36 @@
 from rest_framework import fields, serializers
-from .models import Product
+from .models import Product, Lesson, User, WatchStatuses, View
 
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model  = Product
-        fields = ("name", "owner")
+        fields = ("prod_id", "name")
+
+class LessonSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model  = Lesson
+        fields = ("les_id", "name", "video_link", "length_seconds")
+
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model  = User
+        fields = ("user_id", "first_name", "last_name", "role", "created_at")
+
+class WatchStatusesSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model  = WatchStatuses
+        fields = ("les_id", "user_id", "status")
+
+class ViewSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model  = View
+        fields = ("les_id", "user_id", "date", "from_seconds", "to_seconds")
+
+# class ProductsLessonsRelationsSerializer(serializers.HyperlinkedModelSerializer):
+#     class Meta:
+#         model  = ProductsLessonsRelations
+#         fields = ("prod_id ", "les_id")
 
 
 # class HotelSerializer(serializers.ModelSerializer):

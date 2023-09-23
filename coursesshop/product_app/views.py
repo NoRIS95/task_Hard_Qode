@@ -2,14 +2,18 @@ from rest_framework import  status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
-from .models import Product
-from .serializer import ProductSerializer
+from .models import Product, Lesson, User, WatchStatuses, View
+from .serializer import ProductSerializer, LessonSerializer, UserSerializer, WatchStatusesSerializer, ViewSerializer
 
 from collections import namedtuple
 
 nt = namedtuple("object", ["model", "serializers"])
 pattern = {
     "product"  : nt(Product, ProductSerializer),
+    "lesson"  : nt(Lesson, LessonSerializer),
+    "user"  : nt(User, UserSerializer),
+    "watch_statuses"  : nt(WatchStatuses, WatchStatusesSerializer),
+    "view"  : nt(View, ViewSerializer),
 }
 
 @api_view(["GET", "POST"])
