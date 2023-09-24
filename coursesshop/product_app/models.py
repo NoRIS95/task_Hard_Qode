@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class User(models.Model):
-    user_id = models.IntegerField(blank=True, null=True)
+    user_id = models.IntegerField(default=0)
     first_name = models.CharField(max_length=20)
     last_name = models.CharField(max_length=20)
     role = models.CharField(max_length=20)
@@ -18,9 +18,11 @@ class User(models.Model):
         verbose_name_plural = "Пользователи"
 
 class Product(models.Model):
-    prod_id = models.IntegerField(blank=True, null=True)
+    prod_id = models.IntegerField(default=0)
     name  = models.CharField(max_length=20)
-    owner_id  = models.ForeignKey(User, on_delete=models.CASCADE)
+    # owner_id  = models.IntegerField(blank=True, null=True)
+    # users_with_access = models.CharField(max_length=20)
+    user_id  = models.ForeignKey(User, on_delete=models.CASCADE)
     users_with_access = models.ManyToManyField(User, related_name='accessible_products', blank=True)
 
     # owner_id = models.IntegerField(blank=True, null=True)
@@ -32,22 +34,23 @@ class Product(models.Model):
         verbose_name = "Продукт"
         verbose_name_plural = "Продукты"
 
-class WatchStatuses(models.Model):
-    les_id = models.IntegerField(blank=True, null=True)
-    user_id = models.IntegerField(blank=True, null=True)
-    status = models.BooleanField(default=False)
+# class WatchStatuses(models.Model):
+#     les_id = models.IntegerField(blank=True, null=True)
+#     user_id = models.IntegerField(blank=True, null=True)
+#     status = models.BooleanField(default=False)
 
     # def __str__(self) -> str:
     #     return self.status
 
 
 class Lesson(models.Model):
-    les_id = models.IntegerField(blank=True, null=True)
-    name  = models.CharField(max_length=20)
+    les_id = models.IntegerField(default=0)
+    name = models.CharField(max_length=20)
     video_link  = models.URLField()
-    length_seconds = models.PositiveIntegerField()
-    products = models.ManyToManyField(Product, related_name='lessons')
+    length_seconds = models.PositiveIntegerField(blank=True, null=True)
     views_count = models.IntegerField(default=0)
+    products = models.ManyToManyField(Product, related_name='lessons')
+    # views_count = models.IntegerField(default=0)
     # user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     # count_les = model.IntegerField(default=0)
 
