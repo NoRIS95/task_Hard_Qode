@@ -1,10 +1,9 @@
 from django.contrib import admin
 
-from .models import Product, Lesson, User, View
+from .models import Product, Lesson, LessonView
+from django.contrib.auth.models import User
 
 
 admin.site.register(Product)
 admin.site.register(Lesson)
-admin.site.register(User)
-# admin.site.register(WatchStatuses)
-admin.site.register(View)
+admin.site.register(LessonView)

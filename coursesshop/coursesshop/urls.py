@@ -24,10 +24,10 @@ Including another URLconf
 # ]
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from django.urls.conf import include
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/product-api/', include('product_app.urls')),
+    path('product-app/', include('product_app.urls'))
 ]
-#     path('api/v1/product-app/', include('product_app.urls')),
-# ]

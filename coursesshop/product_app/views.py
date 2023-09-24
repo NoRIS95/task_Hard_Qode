@@ -1,126 +1,61 @@
-from rest_framework import  status
 from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework.views import APIView
-from .models import Product, Lesson, User, View
-from .serializer import ProductSerializer, LessonSerializer, UserSerializer,  ViewSerializer
-from collections import namedtuple
+from .models import Product, Lesson, LessonView
+from django.contrib.auth.models import User
+from .serializerz import ProductStatisticsSerializer, ProductSerializer
+from django.db import models
+from django.db.models import Count, Sum, F, FloatField, Subquery, OuterRef
+from django.db.models.functions import Coalesce
+from .config import VIEW_FRACTION_THRESH
 
-
-
-
-nt = namedtuple("object", ["model", "serializers"])
-pattern = {
-    "product"  : nt(Product, ProductSerializer),
-    "lesson"  : nt(Lesson, LessonSerializer),
-    "user"  : nt(User, UserSerializer),
-    "view"  : nt(View, ViewSerializer),
-}
-
-
-@api_view(["GET", "POST"])
-def ListView(request, api_name):
-    object =  pattern.get(api_name, None)
-    if object == None:
-        return Response(
-            data   = "Invalid URL",
-            status = status.HTTP_404_NOT_FOUND,
-        )
-    if request.method == "GET":
-        object_list = object.model.objects.all()
-        serializers  = object.serializers(object_list, many=True)
-        return Response(serializers.data)
-
-    if request.method == "POST":
-        data = request.data
-        serializers = object.serializers(data=data)
-        
-        if not serializers.is_valid():
-            return Response(
-                data   = serializers.error,
-                status = status.HTTP_404_NOT_FOUND
-            )
-        serializers.save()
-        return Response(
-                data   = serializers.error,
-                status = status.HTTP_201_CREATED
-        )
-
-
-
-
-
-#     "watch_statuses"  : nt(WatchStatuses, WatchStatusesSerializer),
 
 class AccessibleProductsLessonsView(generics.ListAPIView):
     serializer_class = ProductSerializer
-
+    
     def get_queryset(self):
-        return self.request.user.accessible_products.all()
+        if user_id := self.request.GET.get('user_id'):
+            user_id = int(user_id)
+        users = User.objects.filter(id=user_id).all()
+        if len(users) == 0: return
+        user = users[0]
+        products = user.accessible_products
+        return products.all()
 
-class ProductLessonsView(generics.RetrieveAPIView):
-    serializer_class = ProductSerializer
-    lookup_url_kwarg = 'product_id'
-    queryset = Product.objects.all()
-
-# class ProductStatisticsView(generics.ListAPIView):
-#     """
-#     Implement statistics view (define serializer and logic for getting statistics)
-#     """
-#     pass
-
-
-
-
+    def get_serializer_context(self):
+        if user_id := self.request.GET.get('user_id'):
+            user_id = int(user_id)
+        context = super().get_serializer_context()
+        context.update({"user_id": user_id})
+        return context
 
 
+class ProductLessonsView(AccessibleProductsLessonsView):
+    def get_queryset(self):
+        if product_id := self.request.GET.get('product_id'):
+            product_id = int(product_id)
+        return super().get_queryset().filter(id=product_id)
 
-# nt = namedtuple("object", ["model", "serializers"])
-# pattern = {
-#     "product"  : nt(Product, ProductSerializer),
-#     "lesson"  : nt(Lesson, LessonSerializer),
-#     "user"  : nt(User, UserSerializer),
-#     "watch_statuses"  : nt(WatchStatuses, WatchStatusesSerializer),
-#     "view"  : nt(View, ViewSerializer),
-# }
-
-
-# # class LesView(APIView):
-# #     def get(self, request, les_id):
-# #         lesson = Lesson.objects.get(id=les_id)
-# #         lesson.views_count += 1
-# #         lesson.save()
-# #         serializer = LessonSerializer(lesson)
-# #         return Response(serializer.data)
+    def get_serializer_context(self):
+        if product_id := self.request.GET.get('product_id'):
+            product_id = int(product_id)
+        context = super().get_serializer_context()
+        context.update({"product_id": product_id})
+        return context
 
 
-
-
-# @api_view(["GET", "POST"])
-# def ListView(request, api_name):
-#     object =  pattern.get(api_name, None)
-#     if object == None:
-#         return Response(
-#             data   = "Invalid URL",
-#             status = status.HTTP_404_NOT_FOUND,
-#         )
-#     if request.method == "GET":
-#         object_list = object.model.objects.all()
-#         serializers  = object.serializers(object_list, many=True)
-#         return Response(serializers.data)
-
-#     if request.method == "POST":
-#         data = request.data
-#         serializers = object.serializers(data=data)
-        
-#         if not serializers.is_valid():
-#             return Response(
-#                 data   = serializers.error,
-#                 status = status.HTTP_404_NOT_FOUND
-#             )
-#         serializers.save()
-#         return Response(
-#                 data   = serializers.error,
-#                 status = status.HTTP_201_CREATED
-#         )
+class ProductStatisticsView(generics.ListAPIView):
+    serializer_class = ProductStatisticsSerializer
+    views = Lesson.objects.select_related('lessonview').values('products', 'id', 'lessonview__user')\
+        .annotate(watched_fraction=Sum('lessonview__view_time_seconds')*1./Coalesce('duration_seconds', 0)).filter(watched_fraction__gt=VIEW_FRACTION_THRESH)
+    
+    users = User.objects
+    try:
+        users_count = users.count()
+    except:
+        users_count = 1
+    queryset = Product.objects.annotate(
+        number_of_lessons_viewed=Count(Subquery(views.filter(products=OuterRef('id')).values('id')), distinct=True),
+        total_view_time=Coalesce(Sum('lessons__lessonview__view_time_seconds', distinct=True), 0),
+        number_of_students=Count('users_with_access', distinct=True),
+    ).annotate(
+        product_purchase_percentage=(F('number_of_students') * 100 / users_count),
+    )
