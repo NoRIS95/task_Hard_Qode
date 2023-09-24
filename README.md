@@ -6,19 +6,19 @@
   git clone https://github.com/NoRIS95/task_Hard_Qode
   cd task_Hard_Qode
   ```
-  2. Создаём виртуальное окружение, указав нужную версию Python и устанавливаем зависимости:
+  2. Создаём виртуальное окружение и устанавливаем зависимости:
   ```
   python3 -m venv env
   . ./env/bin/activate
   cd coursesshop
   pip install -r requirements.txt
   ```
-  3. Заходим в директорию, где лежит файл `manage.py` и применяем миграции.
+  3. Применяем миграции.
   ```
   python manage.py makemigrations 
   python manage.py migrate
   ```
-  4. Создаем суперпользователя.
+  4. Создаем суперпользователя для управления административной панелью.
   ```
   python manage.py createsuperuser
   ```
