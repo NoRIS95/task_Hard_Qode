@@ -20,9 +20,10 @@ class User(models.Model):
 class Product(models.Model):
     prod_id = models.IntegerField(blank=True, null=True)
     name  = models.CharField(max_length=20)
-    owner_id = models.IntegerField(blank=True, null=True)
-    # phone = models.CharField(max_length=20)
-    # email = models.CharField(max_length=30)
+    owner_id  = models.ForeignKey(User, on_delete=models.CASCADE)
+    users_with_access = models.ManyToManyField(User, related_name='accessible_products', blank=True)
+
+    # owner_id = models.IntegerField(blank=True, null=True)
 
     def __str__(self) -> str:
         return self.name
@@ -34,20 +35,24 @@ class Product(models.Model):
 class WatchStatuses(models.Model):
     les_id = models.IntegerField(blank=True, null=True)
     user_id = models.IntegerField(blank=True, null=True)
-    status = models.CharField(max_length=20)
+    status = models.BooleanField(default=False)
 
-    def __str__(self) -> str:
-        return self.status
+    # def __str__(self) -> str:
+    #     return self.status
 
 
 class Lesson(models.Model):
     les_id = models.IntegerField(blank=True, null=True)
     name  = models.CharField(max_length=20)
-    video_link  = models.CharField(max_length=300)
-    length_seconds = models.CharField(max_length=20)
+    video_link  = models.URLField()
+    length_seconds = models.PositiveIntegerField()
+    products = models.ManyToManyField(Product, related_name='lessons')
+    views_count = models.IntegerField(default=0)
+    # user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    # count_les = model.IntegerField(default=0)
 
-    def __str__(self) -> str:
-        return self.name
+    # def __str__(self) -> str:
+    #     return self.name
 
     class Meta:
         verbose_name = "Урок"
@@ -55,15 +60,26 @@ class Lesson(models.Model):
 
 
 class View(models.Model):
-    les_id = models.IntegerField(blank=True, null=True)
-    user_id = models.IntegerField(blank=True, null=True)
-    date = models.DateTimeField()
-    from_seconds = models.IntegerField(blank=True, null=True)
-    to_seconds = models.IntegerField(blank=True, null=True)
+    les_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    # les_id = models.IntegerField(blank=True, null=True)
+    # user_id = models.IntegerField(blank=True, null=True)
+    # view_date = models.DateTimeField(auto_now=True)
+    view_time = models.PositiveIntegerField(default=0)     #Исправить название в других файлах
+    viewed = models.BooleanField(default=False)
+    last_viewed = models.DateTimeField(auto_now=True)
+    # from_seconds = models.IntegerField(blank=True, null=True)
+    # to_seconds = models.IntegerField(blank=True, null=True)
 
-    def __str__(self) -> str:
-        return self.date
+    # def __str__(self) -> str:
+    #     return self.les_id
 
+    class Meta:
+        verbose_name = "Просмотр"
+        verbose_name_plural = "Просмотры"
+
+# class Post(models.Model): # модель у которой будем считать просмотры
+#     views = models.ManyToManyField(View, related_name="post_views", blank=True)
 
 # class ProductsLessonsRelations(models.Model):
 #     prod_id = models.ForeignKey(Product, on_delete = models.DO_NOTHING)

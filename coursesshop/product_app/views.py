@@ -16,6 +16,18 @@ pattern = {
     "view"  : nt(View, ViewSerializer),
 }
 
+
+class LesView(APIView):
+    def get(self, request, les_id):
+        lesson = Lesson.objects.get(id=les_id)
+        lesson.views_count += 1
+        lesson.save()
+        serializer = LessonSerializer(lesson)
+        return Response(serializer.data)
+
+
+
+
 @api_view(["GET", "POST"])
 def ListView(request, api_name):
     object =  pattern.get(api_name, None)
